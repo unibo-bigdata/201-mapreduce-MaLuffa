@@ -22,43 +22,54 @@ public class Ex4AverageWordLength {
 		private IntWritable wordLength = new IntWritable();
 
 		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-			//TODO mapper code
-		}
-	}
-
-	public static class Ex4Reducer extends Reducer<Text, IntWritable, Text, DoubleWritable> {
-
-		public void reduce(Text key, Iterable<IntWritable> values, Context context)
-				throws IOException, InterruptedException {
-			//TODO reducer code
-		}
-	}
-
-	public static void main(String[] args) throws Exception {
-		Configuration conf = new Configuration();
-		Job job = Job.getInstance(conf, "Average word length by initial letter");
-		job.setJarByClass(Ex4AverageWordLength.class);
-		if (args.length > 2) {
-			if (Integer.parseInt(args[2]) >= 0) {
-				job.setNumReduceTasks(Integer.parseInt(args[2]));
+			StringTokenizer itr = new StringTokenizer(value.toString());
+			while (itr.hasMoreTokens()) {
+				word.set(itr.nextToken());
+				firstLetter.set(String.valueOf(word.charAt(0)));
+				wordLength.set(word.getLength());
+				context.write(firstLetter, wordLength);
 			}
-		} else {
-			job.setNumReduceTasks(1);
 		}
 
-		Path inputPath = new Path(args[0]), outputPath = new Path(args[1]);
-		FileSystem fs = FileSystem.get(new Configuration());
-
-		if (fs.exists(outputPath)) {
-			fs.delete(outputPath, true);
+		public static class Ex4Reducer extends Reducer<Text, IntWritable, Text, DoubleWritable> {
+			public void reduce(Text key, Iterable<IntWritable> values, Context context)
+					throws IOException, InterruptedException {
+				double sum = 0;
+				int count = 0;
+				for (IntWritable val : values) {
+					sum += val.get();
+					count++;
+				}
+				context.write(key, new DoubleWritable(sum / count));
+			}
 		}
 
-		job.setMapperClass(Ex4Mapper.class);
-		job.setReducerClass(Ex4Reducer.class);
-		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(IntWritable.class);
-		FileInputFormat.addInputPath(job, inputPath);
-		FileOutputFormat.setOutputPath(job, outputPath);
-		System.exit(job.waitForCompletion(true) ? 0 : 1);
+		public static void main(String[] args) throws Exception {
+			Configuration conf = new Configuration();
+			Job job = Job.getInstance(conf, "Average word length by initial letter");
+			job.setJarByClass(Ex4AverageWordLength.class);
+			if (args.length > 2) {
+				if (Integer.parseInt(args[2]) >= 0) {
+					job.setNumReduceTasks(Integer.parseInt(args[2]));
+				}
+			} else {
+				job.setNumReduceTasks(1);
+			}
+
+			Path inputPath = new Path(args[0]), outputPath = new Path(args[1]);
+			FileSystem fs = FileSystem.get(new Configuration());
+
+			if (fs.exists(outputPath)) {
+				fs.delete(outputPath, true);
+			}
+
+			job.setMapperClass(Ex4Mapper.class);
+			job.setReducerClass(Ex4Reducer.class);
+			job.setOutputKeyClass(Text.class);
+			job.setOutputValueClass(IntWritable.class);
+			FileInputFormat.addInputPath(job, inputPath);
+			FileOutputFormat.setOutputPath(job, outputPath);
+			System.exit(job.waitForCompletion(true) ? 0 : 1);
+		}
 	}
 }
