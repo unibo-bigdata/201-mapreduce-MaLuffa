@@ -19,9 +19,12 @@ public class Ex4InvertedIndex {
 	public static class Ex4Mapper extends Mapper<Object, Text, Text, LongWritable> {
 
 		private Text word = new Text();
-
 		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
-			//TODO mapper code
+			StringTokenizer itr = new StringTokenizer(value.toString());
+			while (itr.hasMoreTokens()) {
+				word.set(itr.nextToken());
+				context.write(word, (LongWritable)key);
+			}
 		}
 	}
 
@@ -30,9 +33,11 @@ public class Ex4InvertedIndex {
 		public void reduce(Text key, Iterable<LongWritable> values, Context context)
 				throws IOException, InterruptedException {
 
-			TreeSet<Long> offsets = new TreeSet<Long>();
-
-			//TODO reducer code
+			final TreeSet<Long> offsets = new TreeSet<Long>();
+			for(LongWritable index : values) {
+				offsets.add(index.get());
+			}
+			context.write(key, new Text(offsets.toString()));
 		}
 	}
 
