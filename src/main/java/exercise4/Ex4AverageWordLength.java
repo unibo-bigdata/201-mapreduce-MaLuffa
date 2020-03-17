@@ -14,22 +14,26 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+//hadoop jar BD-201-mapreduce.jar exercise4.Ex4AverageWordLength /bigdata/dataset/capra mapreduce/averagewordlength/output
+		//hdfs dfs -cat mapreduce/averagewordlength/output/* | head -n 30
 public class Ex4AverageWordLength {
 
 	public static class Ex4Mapper extends Mapper<Object, Text, Text, IntWritable> {
 
-		private Text word = new Text(), firstLetter = new Text();
+		private Text firstLetter = new Text();
 		private IntWritable wordLength = new IntWritable();
 
 		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+
 			StringTokenizer itr = new StringTokenizer(value.toString());
 			while (itr.hasMoreTokens()) {
-				word.set(itr.nextToken());
-				firstLetter.set(String.valueOf(word.charAt(0)));
-				wordLength.set(word.getLength());
+				String word = itr.nextToken();
+				firstLetter.set(word.substring(0, 1));
+				wordLength.set(word.length());
 				context.write(firstLetter, wordLength);
 			}
 		}
+	}
 
 		public static class Ex4Reducer extends Reducer<Text, IntWritable, Text, DoubleWritable> {
 			public void reduce(Text key, Iterable<IntWritable> values, Context context)
@@ -72,4 +76,3 @@ public class Ex4AverageWordLength {
 			System.exit(job.waitForCompletion(true) ? 0 : 1);
 		}
 	}
-}
